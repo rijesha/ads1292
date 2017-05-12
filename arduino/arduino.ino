@@ -22,6 +22,7 @@ volatile static int SPI_RX_Buff_Count = 0;
 volatile char *SPI_RX_Buff_Ptr;
 volatile int Responsebyte = false;
 volatile int32_t chan1, chan2;
+volatile byte DataPacket[10];
 
 unsigned long Time1;
 unsigned long Time2;
@@ -34,7 +35,7 @@ void setup() {
 }
 
 void setup_Morse(){
-  Serial.begin(9600);
+  Serial.begin(57600);
   
   // initialize the digital pin as an output for LED lights.
   //pinMode(led13, OUTPUT);
@@ -61,12 +62,17 @@ void setup_ADS1292(){
   
   Time1 = millis();
   StartTime = millis();
+  Serial.flush();
+  DataPacket[0] = 22;
+  DataPacket[1] = 19;      // packet type: 0x02 -data 0x01 -commmand
+  DataPacket[2] = 20;            // 4 bytes ECG data
+  DataPacket[9] = 21;
 }
 
 // Create a loop of the letters/words you want to output in morse code (defined in string at top of code)
 void loop()
 {
-  uart_rx();
+  //uart_rx();
   ADS1292_loop();
 }
 
@@ -98,51 +104,18 @@ void ADS1292_loop() {
     chan1 = (((uint32_t)SPI_RX_Buff[3] << 24) | ((uint32_t)SPI_RX_Buff[4] << 16) | ((uint32_t)SPI_RX_Buff[5] << 8)) >> 8; 
     chan2 = (((uint32_t)SPI_RX_Buff[6] << 24) | ((uint32_t)SPI_RX_Buff[7] << 16) | ((uint32_t)SPI_RX_Buff[8] << 8)) >> 8; 
    
-    Serial.print(chan1,DEC);
-    Serial.print(","); 
-    Serial.print(SPI_RX_Buff[3]); 
-    Serial.print(","); 
-    Serial.print(chan2,DEC); 
-    Serial.print(","); 
-    Serial.println(SPI_RX_Buff[6]);
+    DataPacket[3] = SPI_RX_Buff[3];
+    DataPacket[4] = SPI_RX_Buff[4];
+    DataPacket[5] = SPI_RX_Buff[5]; 
     
-    Time2 = millis();
-    //Serial.println(Time2 - Time1);
-    Time1 = Time2;
+    DataPacket[6] = SPI_RX_Buff[6];            // 4 bytes Respiration data
+    DataPacket[7] = SPI_RX_Buff[7];
+    DataPacket[8] = SPI_RX_Buff[8];
+
     
-    /*
-    if ((Time1 - StartTime) > 5000){
-      StartTime = millis();
-      count++;
-      if (count == 1){
-        ADS1292.ads1292_Change_Channel_Input(0x00,0x00);
-        Serial.print("Normal, Gain 6");        
-        }
-      if (count == 2){
-        ADS1292.ads1292_Change_Channel_Input(0x05,0x03);         
-        Serial.print("Test_Signal, Gain 3");
-      }
-      if (count == 3){
-        ADS1292.ads1292_Change_Channel_Input(0x05,0x00);         
-        Serial.print("Test_Signal, Gain 6");
-      }
-      if (count == 4){
-        ADS1292.ads1292_Change_Channel_Input(0x05,0x06);        
-        Serial.print("Test_Signal, Gain 12");
-        }
-      if (count == 5){
-        ADS1292.ads1292_Change_Channel_Input(0x03,0x01);
-        Serial.print("Supply Signal, Gain 1");         
-      }
-      if (count == 6){
-        ADS1292.ads1292_Change_Channel_Input(0x01,0x01);
-        Serial.print("Shorted, Gain 1");         
-        count = 0;
-      }
-      //ADS1292.ads1292_Set_Sample_Rate(125);
-      //ADS1292.ads1292_Enable_Test_Signal();
-      
-    }*/
+    
+    for (byte b : DataPacket)
+          Serial.write(b);
     
      SPI_RX_Buff_Count = 0; 
     }

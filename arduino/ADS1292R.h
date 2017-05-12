@@ -9,10 +9,10 @@
 #include "Arduino.h"
 
 //Pin declartion the other you need are controlled by the SPI library
-const int ADS1292_DRDY_PIN = 9;
-const int ADS1292_CS_PIN = 8;
-const int ADS1292_START_PIN = 7;
-const int ADS1292_PWDN_PIN = 6;
+const int ADS1292_DRDY_PIN = 1;
+const int ADS1292_CS_PIN = 0;
+const int ADS1292_START_PIN = 2;
+const int ADS1292_PWDN_PIN = 3;
 
 
 #define CONFIG_SPI_MASTER_DUMMY   0xFF
