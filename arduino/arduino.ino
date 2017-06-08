@@ -112,11 +112,10 @@ void ADS1292_loop() {
     DataPacket[7] = SPI_RX_Buff[7];
     DataPacket[8] = SPI_RX_Buff[8];
 
-    
-    
     for (byte b : DataPacket)
           Serial.write(b);
     
+    //Serial.println(chan1);
      SPI_RX_Buff_Count = 0; 
     }
 }

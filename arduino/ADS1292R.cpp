@@ -55,7 +55,7 @@ void ads1292r::ads1292_Init()
   
   ads1292_Reg_Write(ADS1292_REG_CH1SET, 0x10);	//Ch 1 enabled, gain 6, connected to electrode in
   delay(10);
-  ads1292_Reg_Write(ADS1292_REG_CH2SET, 0x81);	//Ch 2 enabled, gain 6, connected to electrode in
+  ads1292_Reg_Write(ADS1292_REG_CH2SET, 0x10);	//Ch 2 enabled, gain 6, connected to electrode in
   delay(10);
   ads1292_Reg_Write(ADS1292_REG_RLDSENS, 0x00);	//RLD settings: fmod/16, RLD enabled, RLD inputs from Ch2 only
   delay(10);
