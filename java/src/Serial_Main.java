@@ -139,7 +139,7 @@ public class Serial_Main {
 			System.out.println(data);
 
 			try {
-				Thread.sleep(125);
+				Thread.sleep(8);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
