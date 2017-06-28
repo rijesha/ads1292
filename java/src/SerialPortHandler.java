@@ -12,6 +12,7 @@ public class SerialPortHandler {
     
     public void connect(String portName) throws IOException {
         try {
+            System.out.println(portName);
             // Obtain a CommPortIdentifier object for the port you want to open
             CommPortIdentifier portId =
                     CommPortIdentifier.getPortIdentifier(portName);
@@ -28,10 +29,13 @@ public class SerialPortHandler {
             outStream = serialPort.getOutputStream();
             inStream = serialPort.getInputStream();
         } catch (NoSuchPortException e) {
+            e.printStackTrace();
             throw new IOException(e.getMessage());
         } catch (PortInUseException e) {
+            e.printStackTrace();
             throw new IOException(e.getMessage());
         } catch (IOException e) {
+            e.printStackTrace();
             serialPort.close();
             throw e;
         }

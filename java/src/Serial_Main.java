@@ -1,12 +1,5 @@
-import java.awt.Container;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.io.IOException;
 import java.io.InputStream;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import org.apache.commons.cli.*;
 
@@ -17,18 +10,18 @@ public class Serial_Main {
 	private static boolean loggerStart;
 
 	private static boolean disableGUI;
+	private static boolean verbose;
+	private static boolean fakeDataEnabled;
 	private static String comPort = "COM9";
 			
 	private static InputStream in;
 	private static byte[] dataPacket = new byte[10];
-	private static int REALTIMEUPDATERATIO = 4;
 
 	public static void main(String[] args) {
 		parseCLI(args);
 		logger = new Logger(loggerStart);
 
 		SerialPortHandler s = new SerialPortHandler();	
-		in = s.getSerialInputStream();
 
 		try {
 			Thread.sleep(200);
@@ -37,13 +30,16 @@ public class Serial_Main {
 		}
 		
 		try {
+			System.out.println(comPort);
 			s.connect(comPort);
+			in = s.getSerialInputStream();
 			findHeaderStart();
 			startSerialParsing();
 		} catch (IOException | InterruptedException e) {
 			System.out.println("Failed to Open Serial Port");
 			e.printStackTrace();
-			fakeData();
+			if (fakeDataEnabled)
+				fakeData();
 		}
 		        
         
@@ -58,8 +54,14 @@ public class Serial_Main {
         Option output = new Option("l", "start_logging", false, "enabling logging on startup");
         options.addOption(output);
 
-        Option serialport = new Option("d", "serial_device_port", false, "location of serial device port");
+        Option serialport = new Option("d", "serial_device_port", true, "location of serial device port");
         options.addOption(serialport);
+
+        Option verboseOption = new Option("v", "verbose", false, "Write values to STD out");
+        options.addOption(verboseOption);
+
+        Option fakeDataEnabledOption = new Option("f", "fake_data", false, "Use Fake Data on Seial Failure");
+        options.addOption(fakeDataEnabledOption);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -78,8 +80,13 @@ public class Serial_Main {
         disableGUI = cmd.hasOption("disable_gui");
 		loggerStart = cmd.hasOption("start_logging");
 
-		if (cmd.hasOption("serial_device_port"))
+		verbose = cmd.hasOption("verbose");
+		fakeDataEnabled = cmd.hasOption("fake_data");
+
+		if (cmd.hasOption("serial_device_port")){
 			comPort = cmd.getOptionValue("serial_device_port");
+		}
+			
 	}
 
 	
@@ -91,7 +98,7 @@ public class Serial_Main {
 		
 		in.read(one);
 		while (foundStart == false){
-			one = two;
+			one[0] = two[0];
 			in.read(two);
 			Thread.sleep(2);
 			if ((one[0] == 21) && (two[0] == 22))
@@ -114,7 +121,8 @@ public class Serial_Main {
 					if (loggerStart)
 						logger.writeLine(data);
 
-					System.out.println(data);
+					if (verbose)
+						System.out.println(data);
 				}
 				else
 					findHeaderStart();
@@ -136,7 +144,8 @@ public class Serial_Main {
 			if (loggerStart)
 				logger.writeLine(data);
 			
-			System.out.println(data);
+			if (verbose)
+				System.out.println(data);
 
 			try {
 				Thread.sleep(8);
