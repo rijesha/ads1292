@@ -48,14 +48,14 @@ void ads1292r::ads1292_Init()
   
   ads1292_Reg_Write(ADS1292_REG_CONFIG1, 0x00); 		//Set sampling rate to 125 SPS
   delay(10);
-  ads1292_Reg_Write(ADS1292_REG_CONFIG2, 0xB3);	//Lead-off comp off, test signal enabled
+  ads1292_Reg_Write(ADS1292_REG_CONFIG2, 0xB0);	//Lead-off comp off, test signal enabled
   delay(10);
   ads1292_Reg_Write(ADS1292_REG_LOFF, 0x10);		//Lead-off defaults
   delay(10);
   
-  ads1292_Reg_Write(ADS1292_REG_CH1SET, 0x10);	//Ch 1 enabled, gain 6, connected to electrode in
+  ads1292_Reg_Write(ADS1292_REG_CH1SET, 0x30);	//Ch 1 enabled, gain 6, connected to electrode in
   delay(10);
-  ads1292_Reg_Write(ADS1292_REG_CH2SET, 0x10);	//Ch 2 enabled, gain 6, connected to electrode in
+  ads1292_Reg_Write(ADS1292_REG_CH2SET, 0x30);	//Ch 2 enabled, gain 6, connected to electrode in
   delay(10);
   ads1292_Reg_Write(ADS1292_REG_RLDSENS, 0x00);	//RLD settings: fmod/16, RLD enabled, RLD inputs from Ch2 only
   delay(10);
