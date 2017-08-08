@@ -3,7 +3,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import gnu.io.*; // RXTX
-
+ 
 public class SerialPortHandler {
     private SerialPort serialPort;
     private OutputStream outStream;

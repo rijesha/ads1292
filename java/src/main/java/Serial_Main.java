@@ -5,11 +5,11 @@ import org.apache.commons.cli.*;
 
 import java.util.Random;
 
+
 public class Serial_Main {
 	private static Logger logger;
 	private static boolean loggerStart;
-
-	private static boolean disableGUI;
+	
 	private static boolean verbose;
 	private static boolean fakeDataEnabled;
 	private static String comPort = "COM9";
@@ -17,10 +17,18 @@ public class Serial_Main {
 	private static InputStream in;
 	private static byte[] dataPacket = new byte[10];
 
+	private static IvyHandler ivyHandler;
+
 	public static void main(String[] args) {
 		parseCLI(args);
 		logger = new Logger(loggerStart);
 
+		try {
+			ivyHandler = new IvyHandler("Serial Handler");
+		}
+		catch  (Exception ie) {
+			ie.printStackTrace();
+		}
 		SerialPortHandler s = new SerialPortHandler();	
 
 		try {
@@ -38,8 +46,12 @@ public class Serial_Main {
 		} catch (IOException | InterruptedException e) {
 			System.out.println("Failed to Open Serial Port");
 			e.printStackTrace();
-			if (fakeDataEnabled)
+			if (fakeDataEnabled) {
+				System.out.println("FAKING DATA");
 				fakeData();
+
+			}
+				
 		}
 		        
         
@@ -77,7 +89,7 @@ public class Serial_Main {
             return;
         }
 
-        disableGUI = cmd.hasOption("disable_gui");
+        //disableGUI = cmd.hasOption("disable_gui");
 		loggerStart = cmd.hasOption("start_logging");
 
 		verbose = cmd.hasOption("verbose");
@@ -107,7 +119,6 @@ public class Serial_Main {
 	}
 	
 	private static void startSerialParsing() throws IOException, InterruptedException{
-		int realTimeUpdateCounter = 0;
 		
 		while (true){
 			if (in.available() > 10){
@@ -132,7 +143,6 @@ public class Serial_Main {
 	}
 
 	private static void fakeData() {
-		int realTimeUpdateCounter = 0;
 		Random rn = new Random();
 
 		while (true){
@@ -140,6 +150,7 @@ public class Serial_Main {
 			int chan2 = rn.nextInt();
 
 			String data = String.valueOf(System.currentTimeMillis()) + " " +  chan1 + " " + chan2;
+			ivyHandler.send(data);
 					
 			if (loggerStart)
 				logger.writeLine(data);
