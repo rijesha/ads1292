@@ -127,8 +127,6 @@ void ads1292r::ads1292_Stop_Read_Data_Continuous (void)
 
 void ads1292r::ads1292_SPI_Command_Data(unsigned char data_in)
 {
-  byte data[1];
-  //data[0] = data_in;
   digitalWrite(ADS1292_CS_PIN, LOW);
   delay(2);
   digitalWrite(ADS1292_CS_PIN, HIGH);

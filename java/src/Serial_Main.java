@@ -1,22 +1,28 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import org.apache.commons.cli.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class Serial_Main {
 	private static Logger logger;
 	private static boolean loggerStart;
 
-	private static boolean disableGUI;
 	private static boolean verbose;
 	private static boolean fakeDataEnabled;
-	private static String comPort = "COM9";
+	private static String comPort = "COM3";
 			
 	private static InputStream in;
-	private static byte[] dataPacket = new byte[10];
+	private static byte[] radarPacket = new byte[8];
 
+	private static byte[] gpsVelPacket = new byte[14];
+	private static byte[] gpsPosPacket = new byte[18];
+
+	
 	public static void main(String[] args) {
 		parseCLI(args);
 		logger = new Logger(loggerStart);
@@ -48,8 +54,8 @@ public class Serial_Main {
 	private static void parseCLI(String[] args) {
 		Options options = new Options();
 
-        Option input = new Option("c", "disable_gui", false, "disable the gui");
-        options.addOption(input);
+        //Option input = new Option("c", "disable_gui", false, "disable the gui");
+        //options.addOption(input);
 
         Option output = new Option("l", "start_logging", false, "enabling logging on startup");
         options.addOption(output);
@@ -57,7 +63,7 @@ public class Serial_Main {
         Option serialport = new Option("d", "serial_device_port", true, "location of serial device port");
         options.addOption(serialport);
 
-        Option verboseOption = new Option("v", "verbose", false, "Write values to STD out");
+        Option verboseOption = new Option("v", "quiet", false, "disables write of values to std_out");
         options.addOption(verboseOption);
 
         Option fakeDataEnabledOption = new Option("f", "fake_data", false, "Use Fake Data on Seial Failure");
@@ -77,10 +83,9 @@ public class Serial_Main {
             return;
         }
 
-        disableGUI = cmd.hasOption("disable_gui");
 		loggerStart = cmd.hasOption("start_logging");
 
-		verbose = cmd.hasOption("verbose");
+		verbose = !cmd.hasOption("quiet");
 		fakeDataEnabled = cmd.hasOption("fake_data");
 
 		if (cmd.hasOption("serial_device_port")){
@@ -88,12 +93,11 @@ public class Serial_Main {
 		}
 			
 	}
-
-	
 	
 	private static void findHeaderStart() throws IOException, InterruptedException{
 		byte[] one = new byte[1]; 
 		byte[] two = new byte[1];
+		System.out.println("FINDING HEADER START");
 		boolean foundStart = false;
 		
 		in.read(one);
@@ -101,38 +105,104 @@ public class Serial_Main {
 			one[0] = two[0];
 			in.read(two);
 			Thread.sleep(2);
-			if ((one[0] == 21) && (two[0] == 22))
+			if ((one[0] == 19) && (two[0] == 20))
 				foundStart = true;
 		}
 	}
 	
 	private static void startSerialParsing() throws IOException, InterruptedException{
-		int realTimeUpdateCounter = 0;
+		int packetSize = 0;
+		String data = "null";
+		ByteBuffer bb = ByteBuffer.allocate(4);
+		byte[] tempVar = new byte[4];
 		
 		while (true){
-			if (in.available() > 10){
-				in.read(dataPacket);
-				if (dataPacket[0] == 19 && dataPacket[1] == 20 && dataPacket[8] == 21 && dataPacket[9] == 22 ){
-					int chan1 = dataPacket[2] << 16 | (dataPacket[3] & 0xff) << 8 | (dataPacket[4] & 0xff);
-					int chan2 = dataPacket[5] << 16 | (dataPacket[6] & 0xff) << 8 | (dataPacket[7] & 0xff);
-
-					String data = String.valueOf(System.currentTimeMillis()) + " " +  chan1 + " " + chan2;
-					
-					if (loggerStart)
-						logger.writeLine(data);
-
-					if (verbose)
-						System.out.println(data);
-				}
-				else
-					findHeaderStart();
+			if (in.available() > 1) {
+				packetSize = in.read();
+			
+			while (in.available() < packetSize + 2) {
+				Thread.sleep(1);
 			}
+			
+			switch (packetSize) {
+            	case 6:  
+            		in.read(radarPacket);
+            		if (radarPacket[6] == 19 && radarPacket[7] == 20 ){
+    					int chan1 = radarPacket[0] << 16 | (radarPacket[1] & 0xff) << 8 | (radarPacket[2] & 0xff);
+    					int chan2 = radarPacket[3] << 16 | (radarPacket[4] & 0xff) << 8 | (radarPacket[5] & 0xff);
+    					data = String.valueOf(System.currentTimeMillis()) + " " +  chan1 + " " + chan2;   					
+    				}
+    				else
+    					findHeaderStart();
+            		break;
+            
+            	case 4:
+            		int test = readInteger();
+            		
+            		if (in.read() == 19 && in.read() == 20) {
+            			data = String.valueOf(System.currentTimeMillis()) + " " +  test;   					
+    				}
+            		else
+            			findHeaderStart();
+            		
+            		break;
+            		
+            	case 12:
+            		long gspeed = intToUnsigned(readInteger());
+            		int z_dot = readInteger();
+            		int heading = readInteger();
+            		
+            		if (in.read() == 19 && in.read() == 20) {
+            			data = String.valueOf(System.currentTimeMillis()) + " " +  gspeed + " " + z_dot + " " + heading;   					
+    				}
+            		else
+            			findHeaderStart();
+            		
+            		break;
+            	
+            	case 16:
+            		int lon = readInteger();
+            		int lat = readInteger();
+            		int hMSL = readInteger();
+            		long hAcc = intToUnsigned(readInteger());
+            		
+            		if (in.read() == 19 && in.read() == 20) {
+            			data = String.valueOf(System.currentTimeMillis()) + " " +  lon + " " + lat + " " + hMSL + " " + hAcc;   					
+    				}
+            		else
+            			findHeaderStart();
+            		
+            		break;
+            	
+            	default: findHeaderStart();
+            		break;
+			}
+			
+			if (loggerStart)
+				logger.writeLine(data);
+
+			if (verbose)
+				System.out.println(data);
+			
+			}
+			
 			Thread.sleep(1);
 		}
 	}
 
+	private static int readInteger() throws IOException {
+		byte[] tempVar = new byte[4];
+		in.read(tempVar);
+		ByteBuffer bb = ByteBuffer.wrap(tempVar);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		return bb.getInt();
+	}
+	
+	private static long intToUnsigned(int num) {
+		return num & 0x00000000ffffffffL;
+	}
+	
 	private static void fakeData() {
-		int realTimeUpdateCounter = 0;
 		Random rn = new Random();
 
 		while (true){
@@ -156,3 +226,4 @@ public class Serial_Main {
 	}
 
 }
+

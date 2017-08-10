@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
 
+
 public class Logger implements Runnable, ActionListener{
 
 	private PrintWriter writer;

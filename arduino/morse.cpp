@@ -28,11 +28,13 @@ Morse::~Morse() {}
     // Call the subroutine to get the morse code equivalent for this character
     GetChar(tmpChar);
     Serial.print(tmpChar);
+    Serial3.print(tmpChar);
     }
     // At the end of the string long pause before looping and starting again
     LightsOff(2000);
     LightsOn();
     Serial.println(" ");
+    Serial3.print(" ");
   }
   // Write List
   void Morse::digitalWriteList(uint8_t status)
